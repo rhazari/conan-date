@@ -4,7 +4,7 @@ from conans.tools import download, check_sha256
 
 class HowardHinnantDate(ConanFile):
     name = 'date'
-    version = ''
+    version = '2.2.0'
     description = 'A date and time library based on the C++11/14/17 <chrono> header'
     url = 'https://github.com/rhazari/conan-date'
     license = 'https://github.com/HowardHinnant/date/blob/master/LICENSE.txt'
@@ -13,7 +13,7 @@ class HowardHinnantDate(ConanFile):
     def source(self):
         download_url = 'https://raw.githubusercontent.com/HowardHinnant/date/v2.2/date.h'
         download(download_url, 'date.h')
-        check_sha256('date.h', 'a500c2a1ebee8e1a6bf524416e7c94ac71203cf715c5181714691b5206145db6')
+        check_sha256('date.h', '1b1883cb3aa05b288efddc5299ef7e15864fb354752241cf3bd1c16fbcc088b9')
 
     def build(self):
         return  # do nothing - header only
