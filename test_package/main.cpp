@@ -1,3 +1,4 @@
+#include "date/tz.h"
 #include "date/date.h"
 #include <algorithm>
 #include <iomanip>
@@ -7,123 +8,137 @@
 #include <stdexcept>
 #include <string>
 
-date::year
-current_year()
+date::sys_seconds parse(const std::string& str)
 {
-    using namespace std::chrono;
-    using namespace date;
-    year_month_day ymd = floor<days>(system_clock::now());
-    return ymd.year();
-}
-
-// The number of weeks in a calendar month layout plus 2 more for the calendar titles
-unsigned
-number_of_lines_calendar(date::year_month const ym, date::weekday const firstdow)
-{
-    using namespace date;
-    return static_cast<unsigned>(
-        ceil<weeks>((weekday{ym/1} - firstdow) + ((ym/last).day() - day{0})).count()) + 2;
-}
-
-// Print one line of a calendar month
-void
-print_line_of_calendar_month(std::ostream& os, date::year_month const ym,
-                             unsigned const line, date::weekday const firstdow)
-{
-    using namespace std;
-    using namespace date;
-    switch (line)
+    std::istringstream in(str);
+    date::sys_seconds tp;
+    in >> date::parse("%FT%TZ", tp);
+    if (in.fail())
     {
-    case 0:
-        // Output month and year title
-        os << left << setw(21) << format(os.getloc(), " %B %Y", sys_days{ym/1}) << right;
-        break;
-    case 1:
-        {
-        // Output weekday names title
-        auto sd = sys_days{ym/firstdow[1]};
-        for (auto const esd = sd + weeks{1}; sd < esd; sd += days{1})
-        {
-            auto d = format(os.getloc(), "%a", sd);
-            d.resize(2);
-            os << ' ' << d;
-        }
-        break;
-        }
-    case 2:
-        {
-        // Output first week prefixed with spaces if necessary
-        auto wd = weekday{ym/1};
-        os << string(static_cast<unsigned>((wd-firstdow).count())*3, ' ');
-        auto d = 1_d;
-        do
-        {
-            os << setw(3) << unsigned(d);
-            ++d;
-        } while (++wd != firstdow);
-        break;
-        }
-    default:
-        {
-        // Output a non-first week:
-        // First find first day of week
-        unsigned index = line - 2;
-        auto sd = sys_days{ym/1};
-        if (weekday{sd} == firstdow)
-            ++index;
-        auto ymdw = ym/firstdow[index];
-        if (ymdw.ok()) // If this is a valid week, print it out
-        {
-            auto d = year_month_day{ymdw}.day();
-            auto const e = (ym/last).day();
-            auto wd = firstdow;
-            do
-            {
-                os << setw(3) << unsigned(d);
-            } while (++wd != firstdow && ++d <= e);
-            // Append row with spaces if the week did not complete
-            os << string(static_cast<unsigned>((firstdow-wd).count())*3, ' ');
-        }
-        else  // Otherwise not a valid week, output a blank row
-            os << string(21, ' ');
-        break;
-        }
+        in.clear();
+        in.str(str);
+        in >> date::parse("%FT%T%z", tp);
     }
+    return tp;
 }
 
-void
-print_calendar_year(std::ostream& os, unsigned const cols = 3,
-                    date::year const y = current_year(),
-                    date::weekday const firstdow = date::sun)
+int main()
 {
-    using namespace date;
-    if (cols == 0 || 12 % cols != 0)
-        throw std::runtime_error("The number of columns " + std::to_string(cols)
-                                 + " must be one of [1, 2, 3, 4, 6, 12]");
-    // Compute number of lines needed for each calendar month
-    unsigned ml[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    for (auto& m : ml)
-        m = number_of_lines_calendar(y/month{m}, firstdow);
-    for (auto r = 0u; r < 12/cols; ++r) // for each row
+    auto lprintdate = [](auto const & d) {std::cout << d << std::endl; };
+
+    // create sys_days objects (including literals):
     {
-        const auto lines = *std::max_element(std::begin(ml) + (r*cols),
-                                             std::begin(ml) + ((r+1)*cols));
-        for (auto l = 0u; l < lines; ++l) // for each line
-        {
-            for (auto c = 0u; c < cols; ++c) // for each column
-            {
-                if (c != 0)
-                    os << "   ";
-                print_line_of_calendar_month(os, y/month{r*cols + c+1}, l, firstdow);
-            }
-            os << '\n';
-        }
-        os << '\n';
-    }
-}
+        using namespace date;
+        using namespace std::chrono;
+        sys_days d1 = 2016_y / oct / 29;
+        sys_days d2 = 29_d / oct / 2016;
+        sys_days d3 = oct / 29 / 2016;
+        auto today = floor<days>(system_clock::now());
 
-int
-main()
-{
-    print_calendar_year(std::cout, 3);
+        lprintdate(d1);      // 2016-10-29
+        lprintdate(d2);      // 2016-10-29
+        lprintdate(d3);      // 2016-10-29
+        lprintdate(today);
+    }
+
+    // create year_month_day objects (including literals):
+    {
+        using namespace date;
+        using namespace std::chrono;
+        year_month_day d1 = 2016_y / oct / 29;
+        year_month_day d2 = 29_d / oct / 2016;
+        year_month_day d3 = oct / 29 / 2016;
+        year_month_day today = floor<days>(system_clock::now());
+
+        lprintdate(d1);      // 2016-10-29
+        lprintdate(d2);      // 2016-10-29
+        lprintdate(d3);      // 2016-10-29
+        lprintdate(today);
+    }
+
+    // creating year_month_weekday literals and converting to year_month_day
+    {
+        using namespace date;
+        using namespace std::chrono;
+        auto wd1 = 2016_y / oct / mon[1];
+        auto wd2 = mon[1] / oct / 2016;
+        auto wd3 = oct / mon[1] / 2016;
+
+        lprintdate(wd1);     // 2016/Oct/Mon[1]
+        lprintdate(wd2);     // 2016/Oct/Mon[1]
+        lprintdate(wd3);     // 2016/Oct/Mon[1]
+
+        auto d1 = year_month_day{ wd1 };
+        auto d2 = year_month_day{ wd2 };
+        auto d3 = year_month_day{ wd2 };
+
+        lprintdate(d1);      // 2016-10-03
+        lprintdate(d2);      // 2016-10-03
+        lprintdate(d3);      // 2016-10-03
+    }
+
+    // create year_month_day values for today, yesterday and tomorrow
+    {
+        using namespace date;
+        using namespace std::chrono;
+        auto today = floor<days>(system_clock::now());
+        auto tomorrow = today + days{ 1 };
+        auto yesterday = today - days{ 1 };
+
+        lprintdate(yesterday);
+        lprintdate(today);
+        lprintdate(tomorrow);
+    }
+
+    // create year_month_day values for first and last day of the month
+    {
+        using namespace date;
+        using namespace std::chrono;
+        auto today = year_month_day{ floor<days>(system_clock::now()) };
+        auto first_day_this_month = year_month_day{ today.year(), today.month(), day{ 1 } };
+        lprintdate(first_day_this_month);// 2016-10-01
+
+        auto d1 = year_month_day_last(today.year(), month_day_last{ today.month() });
+        auto last_day_this_month = year_month_day{ d1 };
+        lprintdate(last_day_this_month); // 2016-10-31
+
+        auto d2 = year_month_day_last(year{ 2016 }, month_day_last{ month{ 2 } });
+        auto last_day_feb = year_month_day{ d2 };
+        lprintdate(last_day_feb);        // 2016-02-29
+    }
+
+    //{
+    //    using namespace date;
+    //    using namespace std::chrono;
+    //    auto isod1 = 2016_y / 42 / mon;
+    //    auto isod2 = 42_w / mon / 2016_y;
+    //    auto isod3 = mon / 42_w / 2016_y;
+
+    //    lprintdate(isod1);  // 2016-W44-Mon
+    //    lprintdate(isod2);  // 2016-W44-Mon
+    //    lprintdate(isod3);  // 2016-W44-Mon
+    //}
+
+    //{
+    //    using namespace date;
+    //    using namespace std::chrono;
+    //    auto today = floor<days>(system_clock::now());
+    //    auto today_iso = year_weeknum_weekday{ today };
+
+    //    lprintdate(today_iso);  // 2016-W44-Mon
+    //    std::cout << "week " << (unsigned)today_iso.weeknum() << std::endl; //44
+    //}
+
+    //{
+    //    using namespace date;
+    //    using namespace std::chrono;
+    //    //std::cout << make_zoned(current_zone(), system_clock::now()) << '\n';
+    //}
+
+    //{
+    //    using namespace date;
+    //    std::cout << parse("2015-08-27T11:31:40+0100").time_since_epoch() << '\n';
+    //    std::cout << parse("2015-08-27T10:31:40Z").time_since_epoch() << '\n';
+    //}
+    return 0;
 }
