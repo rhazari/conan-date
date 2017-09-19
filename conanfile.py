@@ -9,7 +9,7 @@ class HowardHinnantDate(ConanFile):
     url = 'https://github.com/rhazari/conan-date'
     license = 'https://github.com/rhazari/date/blob/{!s}-cmake/LICENSE.txt'.format(version)
     settings = 'os', 'compiler', 'arch', 'build_type'
-    exports_sources = 'CMakeLists.txt'
+    exports_sources = 'CMakeLists.txt', 'tzdata*'
     generators = 'cmake'
 
     @property
@@ -21,6 +21,7 @@ class HowardHinnantDate(ConanFile):
 
     def _run_cmake(self):
         extra_defs = {}
+        #extra_defs['DATE_TZDATA_DIR'] = self._get_build_dir()
         cmake = CMake(self, parallel=True)
         cmake.configure(defs=extra_defs, build_dir=self._get_build_dir(), source_dir=self.conanfile_directory)
         return cmake
@@ -40,6 +41,10 @@ class HowardHinnantDate(ConanFile):
 
     def package(self):
         self.copy(pattern='*.h', dst='include/date')
+
+    def package_info(self):
+        # TODO: change me to not affect consuming projects
+        self.cpp_info.defines.append('INSTALL='.format(self._get_build_dir()))
 
     def package_id(self):
         self.info.header_only()

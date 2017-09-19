@@ -1,8 +1,9 @@
 project( ConanDate )
 cmake_minimum_required( VERSION 3.0 )
+
+set(DATE_TZDATA_DIR "" CACHE STRING "Location of tzdata.YYYv.tar.gz")
+
+
 include( conanbuildinfo.cmake )
 conan_basic_setup( TARGETS )
-#if( BENCHMARK_ENABLE_TESTING )
-#    enable_testing()
-#endif()
 add_subdirectory( date )
