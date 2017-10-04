@@ -1,7 +1,7 @@
 from conans import ConanFile, CMake
 import os
 
-username = os.getenv('CONAN_USERNAME', 'rhazari')
+username = os.getenv('CONAN_USERNAME', 'rhazarika')
 os.environ['CONAN_USERNAME'] = username
 channel = os.getenv('CONAN_CHANNEL', 'testing')
 os.environ['CONAN_CHANNEL'] = channel
@@ -14,7 +14,7 @@ class DateConanPackageTest(ConanFile):
                     'arch': None,
                     'build_type': ['Release', 'Debug']
                 }
-    requires = 'date/2.2.0@{!s}/{!s}'.format(username, channel)
+    requires = 'date/2.2.2@{!s}/{!s}'.format(username, channel)
     generators = 'cmake'
     build_policy = 'missing'
 
@@ -28,4 +28,4 @@ class DateConanPackageTest(ConanFile):
         self.copy(pattern='*.dylib', dst='bin', src='lib')
 
     def test(self):
-        self.run(os.sep.join(['.', 'bin', 'JsonPackageTest']))
+        self.run(os.sep.join(['.', 'bin', 'DatePackageTest']))
