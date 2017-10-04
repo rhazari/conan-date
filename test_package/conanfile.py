@@ -14,7 +14,7 @@ class DateConanPackageTest(ConanFile):
                     'arch': None,
                     'build_type': ['Release', 'Debug']
                 }
-    requires = 'date/2.2.2@{!s}/{!s}'.format(username, channel)
+    requires = 'date/2.2.3@{!s}/{!s}'.format(username, channel)
     generators = 'cmake'
     build_policy = 'missing'
 
